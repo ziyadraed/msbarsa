@@ -1,0 +1,36 @@
+# Full stack on any VPS: store + PostgreSQL in one command.
+#   docker compose up -d --build
+# Then once, to create tables + load the catalog:
+#   docker compose exec app npx drizzle-kit push --force
+#   docker compose exec app npx tsx scripts/seed.ts
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: app_db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://postgres:${DB_PASSWORD:-postgres}@db:5432/app_db
+      MOYASAR_PUBLISHABLE_KEY: ${MOYASAR_PUBLISHABLE_KEY:-}
+      MOYASAR_SECRET_KEY: ${MOYASAR_SECRET_KEY:-}
+    ports:
+      - "3000:3000"
+
+volumes:
+  pgdata:
