@@ -1,17 +1,165 @@
-import { requireRole } from "@/lib/guard";
-import { Construction } from "lucide-react";
+"use client";
 
-export const dynamic = "force-dynamic";
+import { useEffect, useState } from "react";
+import { Plus, Package, RefreshCw, Loader2, Search, Save, X } from "lucide-react";
+import { toast } from "sonner";
 
-export default async function MerchantProductsPage() {
-  await requireRole(["merchant", "admin"], "/login");
+type Product = {
+  id: string;
+  name: string;
+  latinName: string;
+  categorySlug: string;
+  price: number;
+  comparePrice: number | null;
+  stock: number;
+  status: string;
+  slug: string;
+  type: string;
+};
+type Cat = { slug: string; name: string };
+
+export default function ProductsPage() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [cats, setCats] = useState<Cat[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [q, setQ] = useState("");
+  const [showForm, setShowForm] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    name: "", latinName: "", categorySlug: "windows", price: "", stock: "0", type: "physical",
+  });
+
+  async function load() {
+    setLoading(true);
+    try {
+      const r = await fetch(`/api/merchant/products?q=${encodeURIComponent(q)}`);
+      const d = await r.json();
+      setProducts(d.products ?? []);
+      setCats(d.categories ?? []);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  async function createProduct(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const r = await fetch("/api/merchant/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...form, price: Number(form.price), stock: Number(form.stock) }),
+      });
+      const d = await r.json();
+      if (!r.ok) return toast.error(d.error || "تعذر الحفظ");
+      toast.success("تم إضافة المنتج");
+      setShowForm(false);
+      setForm({ name: "", latinName: "", categorySlug: cats[0]?.slug || "windows", price: "", stock: "0", type: "physical" });
+      load();
+    } catch {
+      toast.error("خطأ في الاتصال");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
-    <div className="rounded-3xl glass p-12 text-center max-w-lg mx-auto mt-10">
-      <span className="mx-auto grid place-items-center w-16 h-16 rounded-3xl bg-gradient-to-br from-neon-500/20 to-viol-500/20 border border-white/10 mb-5">
-        <Construction className="w-8 h-8 text-neon-400" />
-      </span>
-      <h2 className="text-xl font-bold mb-2">قسم products — قيد الإنجاز</h2>
-      <p className="text-sm text-ink-300 leading-7">نعمل على هذه النافذة بالترتيب وفق خطة المنصة. تابع تحديثاتنا — سيتم ربطها بقاعدة البيانات الحقيقية.</p>
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold">المنتجات</h2>
+          <p className="text-sm text-ink-300 mt-1">أدر منتجات متجرك — {products.length} منتج</p>
+        </div>
+        <button onClick={() => setShowForm((v) => !v)} className="btn-primary rounded-2xl px-5 py-3 text-sm font-bold flex items-center gap-2">
+          <Plus className="w-4 h-4" /> إضافة منتج
+        </button>
+      </div>
+
+      {showForm && (
+        <form onSubmit={createProduct} className="glass rounded-3xl p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-bold flex items-center gap-2"><Plus className="w-5 h-5 text-neon-400" /> منتج جديد</h3>
+            <button type="button" onClick={() => setShowForm(false)} className="btn-ghost rounded-xl p-2"><X className="w-4 h-4" /></button>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <label className="block">
+              <span className="block text-xs text-ink-300 mb-1.5">اسم المنتج *</span>
+              <input className="inp" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required placeholder="مثال: ويندوز 11 برو" />
+            </label>
+            <label className="block">
+              <span className="block text-xs text-ink-300 mb-1.5">الاسم اللاتيني</span>
+              <input className="inp" value={form.latinName} onChange={(e) => setForm({ ...form, latinName: e.target.value })} placeholder="Windows 11 Pro" />
+            </label>
+            <label className="block">
+              <span className="block text-xs text-ink-300 mb-1.5">القسم</span>
+              <select className="inp" value={form.categorySlug} onChange={(e) => setForm({ ...form, categorySlug: e.target.value })}>
+                {cats.map((c) => <option key={c.slug} value={c.slug}>{c.name}</option>)}
+              </select>
+            </label>
+            <label className="block">
+              <span className="block text-xs text-ink-300 mb-1.5">النوع</span>
+              <select className="inp" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
+                <option value="physical">منتج مادي</option>
+                <option value="digital">منتج رقمي</option>
+                <option value="service">خدمة</option>
+              </select>
+            </label>
+            <label className="block">
+              <span className="block text-xs text-ink-300 mb-1.5">السعر (ر.س) *</span>
+              <input className="inp" type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} required min="1" />
+            </label>
+            <label className="block">
+              <span className="block text-xs text-ink-300 mb-1.5">المخزون</span>
+              <input className="inp" type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} />
+            </label>
+          </div>
+          <div className="flex gap-3 pt-2">
+            <button type="submit" disabled={saving} className="btn-primary rounded-2xl px-6 py-3 text-sm font-bold flex items-center gap-2">
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} حفظ المنتج
+            </button>
+            <button type="button" onClick={() => setShowForm(false)} className="btn-ghost rounded-2xl px-6 py-3 text-sm font-semibold">إلغاء</button>
+          </div>
+        </form>
+      )}
+
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-300" />
+          <input className="inp pl-3 pr-10" placeholder="ابحث بالاسم..." value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === "Enter" && load()} />
+        </div>
+        <button onClick={load} className="btn-ghost rounded-2xl px-4 grid place-items-center"><RefreshCw className="w-4 h-4" /></button>
+      </div>
+
+      <div className="glass rounded-3xl overflow-hidden">
+        {loading ? (
+          <div className="p-10 text-center text-ink-300 text-sm">جارٍ التحميل...</div>
+        ) : products.length === 0 ? (
+          <div className="p-12 text-center text-ink-300 text-sm">لا منتجات بعد — أضف أول منتج</div>
+        ) : (
+          <div className="divide-y divide-white/5">
+            {products.map((p) => (
+              <div key={p.id} className="px-5 py-4 flex items-center gap-4 hover:bg-white/3">
+                <span className="grid place-items-center w-10 h-10 rounded-2xl bg-white/5 shrink-0">
+                  <Package className="w-5 h-5 text-neon-400" />
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold truncate">{p.name}</p>
+                  <p className="text-[11px] text-ink-300 truncate">{p.latinName || p.slug}</p>
+                </div>
+                <span className="hidden sm:inline text-xs px-2 py-1 rounded-full bg-white/5 border border-white/10">{p.type}</span>
+                <div className="text-left shrink-0">
+                  <p className="font-latin font-bold text-sm">{p.price} ر.س</p>
+                  <p className="text-[11px] text-ink-300">مخزون: {p.stock}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

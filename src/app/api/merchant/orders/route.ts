@@ -57,3 +57,59 @@ export async function PATCH(req: Request) {
     return Response.json({ error: "تعذر التحديث" }, { status: 500 });
   }
 }
+
+// Create a manual order (e.g. phone/offline sale) — a key Salla-style feature.
+export async function POST(req: Request) {
+  const { error, storeId } = await merchantStore();
+  if (error) return error;
+  try {
+    const body = await req.json();
+    const customerName = String(body?.customerName ?? "").trim();
+    const email = String(body?.email ?? "").trim().toLowerCase();
+    const phone = String(body?.phone ?? "").trim();
+    const lines: { slug: string; name: string; categorySlug: string; price: number; qty: number }[] =
+      Array.isArray(body?.items) ? body.items : [];
+
+    if (customerName.length < 2) return Response.json({ error: "اسم العميل مطلوب" }, { status: 400 });
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email))
+      return Response.json({ error: "بريد إلكتروني غير صالح" }, { status: 400 });
+    if (!lines.length) return Response.json({ error: "أضف منتجًا واحدًا على الأقل" }, { status: 400 });
+
+    const subtotal = lines.reduce((s, l) => s + l.price * l.qty, 0);
+    const orderNumber = `MB-${Math.floor(100000 + Math.random() * 900000)}`;
+
+    const [order] = await db
+      .insert(orders)
+      .values({
+        storeId,
+        orderNumber,
+        customerName,
+        email,
+        phone,
+        paymentMethod: "manual",
+        paymentProvider: "manual",
+        subtotal,
+        discount: 0,
+        total: subtotal,
+        status: "paid",
+      })
+      .returning();
+
+    for (const line of lines) {
+      await db.insert(orderItems).values({
+        storeId,
+        orderId: order.id,
+        productSlug: line.slug,
+        productName: line.name,
+        categorySlug: line.categorySlug,
+        price: line.price,
+        qty: line.qty,
+        licenseKey: `MANUAL-${Math.random().toString(36).slice(2, 10).toUpperCase()}`,
+      });
+    }
+
+    return Response.json({ ok: true, order });
+  } catch {
+    return Response.json({ error: "تعذر إنشاء الطلب" }, { status: 500 });
+  }
+}
