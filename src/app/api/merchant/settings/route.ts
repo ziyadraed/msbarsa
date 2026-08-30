@@ -31,7 +31,23 @@ export async function PATCH(req: Request) {
     const body = await req.json();
     const name = String(body?.name ?? "").trim();
     if (name.length < 2) return Response.json({ error: "اسم المتجر مطلوب" }, { status: 400 });
-    await db.update(stores).set({ name, email: String(body?.email ?? ""), phone: String(body?.phone ?? "") }).where(eq(stores.id, storeId));
+    // Merge extra design/appearance settings into the store's settings jsonb.
+    const design = body?.design && typeof body.design === "object" ? body.design : undefined;
+    let existing: Record<string, unknown> = {};
+    const current = await db.select({ settings: stores.settings, logo: stores.logo }).from(stores).where(eq(stores.id, storeId)).limit(1);
+    if (current.length) existing = (current[0].settings ?? {}) as Record<string, unknown>;
+    const merged = design ? { ...existing, ...design } : existing;
+
+    await db
+      .update(stores)
+      .set({
+        name,
+        email: String(body?.email ?? ""),
+        phone: String(body?.phone ?? ""),
+        logo: body?.logo !== undefined ? String(body.logo) : (current[0]?.logo ?? ""),
+        settings: merged,
+      })
+      .where(eq(stores.id, storeId));
     return Response.json({ ok: true });
   } catch {
     return Response.json({ error: "تعذر الحفظ" }, { status: 500 });

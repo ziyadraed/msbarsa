@@ -29,3 +29,23 @@ export async function GET(req: Request) {
   const rows = await db.select().from(customers).where(and(...conds)!).orderBy(desc(customers.totalSpent)).limit(200);
   return Response.json({ customers: rows });
 }
+
+export async function PATCH(req: Request) {
+  const { error, storeId } = await merchantStore();
+  if (error) return error;
+  try {
+    const body = await req.json();
+    const id = String(body?.id ?? "");
+    if (!id) return Response.json({ error: "المعرف مطلوب" }, { status: 400 });
+    const found = await db.select().from(customers).where(and(eq(customers.id, id), eq(customers.storeId, storeId))).limit(1);
+    if (!found.length) return Response.json({ error: "عميل غير موجود" }, { status: 404 });
+    const tags = Array.isArray(body?.tags)
+      ? (body.tags as string[]).map((t) => String(t).trim()).filter(Boolean).slice(0, 10)
+      : found[0].tags;
+    const notes = body?.notes !== undefined ? String(body.notes) : found[0].notes;
+    await db.update(customers).set({ tags, notes }).where(eq(customers.id, id));
+    return Response.json({ ok: true, tags, notes });
+  } catch {
+    return Response.json({ error: "تعذر الحفظ" }, { status: 500 });
+  }
+}
