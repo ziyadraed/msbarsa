@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { Search, User, ShoppingBag, Radar, Menu, X, Sparkles, PackageSearch, LifeBuoy, BadgePercent, Store, Home, Loader2 } from "lucide-react";
+import { Search, User, ShoppingBag, Radar, Menu, X, Sparkles, PackageSearch, LifeBuoy, BadgePercent, Store, Home, Loader2, LayoutDashboard } from "lucide-react";
 import { useCart } from "./cart-provider";
 import CartDrawer from "./cart-drawer";
 import { cn, formatSAR } from "@/lib/utils";
@@ -40,7 +40,7 @@ export default function SiteHeader() {
   const [scrolled, setScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [user, setUser] = useState<{ name: string } | null>(null);
+  const [user, setUser] = useState<{ name: string; role?: string } | null>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -52,6 +52,8 @@ export default function SiteHeader() {
   useEffect(() => {
     fetch("/api/auth/me").then((r) => (r.ok ? r.json() : Promise.reject())).then((d) => setUser(d.user)).catch(() => setUser(null));
   }, [pathname]);
+  const dashboardHref =
+    user?.role === "admin" ? "/admin" : user?.role === "merchant" ? "/merchant" : null;
 
   useEffect(() => setMobileOpen(false), [pathname]);
 
@@ -108,6 +110,15 @@ export default function SiteHeader() {
               <User className="w-5 h-5" />
               {user && <span className="absolute top-2 left-2 w-2 h-2 rounded-full bg-emerald-400" />}
             </Link>
+            {dashboardHref && (
+              <Link
+                href={dashboardHref}
+                className="hidden sm:inline-flex items-center gap-2 rounded-2xl btn-primary px-4 h-11 text-sm font-semibold"
+              >
+                <LayoutDashboard className="w-4 h-4" />
+                لوحة التحكم
+              </Link>
+            )}
             <button
               onClick={() => cart.setOpen(true)}
               aria-label="السلة"

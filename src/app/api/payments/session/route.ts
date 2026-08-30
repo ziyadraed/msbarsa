@@ -4,6 +4,7 @@ import { priceMap } from "@/lib/data";
 import { generateOrderNumber, validEmail } from "@/lib/utils";
 import { gatewayConfig, toHalalas } from "@/lib/payments";
 import { getSessionUser } from "@/lib/auth";
+import { getStoreId } from "@/lib/tenant";
 import type { PendingLine } from "@/db/schema";
 
 export const dynamic = "force-dynamic";
@@ -41,8 +42,10 @@ export async function POST(req: Request) {
     if (subtotal < 1) return Response.json({ error: "مبلغ الطلب غير صالح" }, { status: 400 });
 
     const user = await getSessionUser();
+    const storeId = await getStoreId();
     const orderNumber = generateOrderNumber();
     await db.insert(orders).values({
+      storeId,
       orderNumber,
       userId: user?.id ?? null,
       customerName: name,

@@ -39,7 +39,7 @@ export default function Hero() {
               className="inline-flex items-center gap-2 rounded-full glass px-4 py-2 text-xs text-neon-400 mb-7"
             >
               <span className="w-2 h-2 rounded-full bg-neon-400 animate-pulse-soft" />
-              متجر التراخيص الرقمية — تفعيل خلال 60 ثانية ⚡ اختبار الربط v1
+              متجر التراخيص الرقمية — تفعيل خلال 60 ثانية
             </motion.div>
 
             <motion.h1

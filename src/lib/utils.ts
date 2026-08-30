@@ -1,5 +1,18 @@
 import crypto from "crypto";
 
+/** Generate a URL/domain-safe slug from Arabic/Latin text. */
+export function slugify(input: string): string {
+  const latin = input
+    .replace(/[\u064B-\u065F\u0640]/g, "") // strip diacritics/tatweel
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9\u0600-\u06FF]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 40);
+  if (latin) return latin;
+  return `store-${crypto.randomInt(1000, 9999)}`;
+}
+
 export function formatSAR(n: number): string {
   return `${new Intl.NumberFormat("en-US").format(n)} ر.س`;
 }

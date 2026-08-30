@@ -17,7 +17,10 @@ export async function POST(req: Request) {
     const user = found[0];
     const token = newSessionToken();
     await db.insert(sessions).values({ token, userId: user.id, expiresAt: sessionExpiryDate() });
-    const res = Response.json({ ok: true, user: { name: user.name, email: user.email } });
+    const res = Response.json({
+      ok: true,
+      user: { name: user.name, email: user.email, role: user.role, storeId: user.storeId },
+    });
     res.headers.append(
       "Set-Cookie",
       `${SESSION_COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${30 * 24 * 60 * 60}`

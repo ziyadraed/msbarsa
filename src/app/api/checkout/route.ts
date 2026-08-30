@@ -3,6 +3,7 @@ import { orders, orderItems } from "@/db/schema";
 import { priceMap } from "@/lib/data";
 import { generateLicenseKey, generateOrderNumber, validEmail } from "@/lib/utils";
 import { getSessionUser } from "@/lib/auth";
+import { getStoreId } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
@@ -44,11 +45,13 @@ export async function POST(req: Request) {
     const total = subtotal;
 
     const user = await getSessionUser();
+    const storeId = await getStoreId();
     const orderNumber = generateOrderNumber();
 
     const [order] = await db
       .insert(orders)
       .values({
+        storeId,
         orderNumber,
         userId: user?.id ?? null,
         customerName: name,
@@ -65,6 +68,7 @@ export async function POST(req: Request) {
     for (const line of lines) {
       for (let i = 0; i < line.qty; i++) {
         await db.insert(orderItems).values({
+          storeId,
           orderId: order.id,
           productSlug: line.slug,
           productName: line.name,

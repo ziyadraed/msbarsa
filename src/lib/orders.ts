@@ -29,12 +29,13 @@ export async function finalizeOrder(orderNumber: string, paymentId?: string): Pr
 
 import type { PendingLine } from "@/db/schema";
 
-export async function issueOrderItems(orderId: string, lines: PendingLine[]): Promise<void> {
+export async function issueOrderItems(orderId: string, storeId: string, lines: PendingLine[]): Promise<void> {
   const existing = await db.select({ id: orderItems.id }).from(orderItems).where(eq(orderItems.orderId, orderId)).limit(1);
   if (existing.length) return; // already issued (idempotent)
   for (const line of lines) {
     for (let i = 0; i < line.qty; i++) {
       await db.insert(orderItems).values({
+        storeId,
         orderId,
         productSlug: line.slug,
         productName: line.name,

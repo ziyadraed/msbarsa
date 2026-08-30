@@ -1,13 +1,15 @@
 import { db } from "@/db";
 import { categories, products } from "@/db/schema";
-import { eq, like, or, desc, asc, sql } from "drizzle-orm";
+import { eq, like, or, desc, asc, sql, and } from "drizzle-orm";
+import { getStoreId } from "./tenant";
 import { CATEGORIES, PRODUCTS, fallbackProducts, fallbackProduct, type Category, type Product } from "./catalog";
 
 export type { Category, Product };
 
-export async function getCategories(): Promise<Category[]> {
+export async function getCategories(storeSlug?: string): Promise<Category[]> {
   try {
-    const rows = await db.select().from(categories);
+    const storeId = await getStoreId(storeSlug);
+    const rows = await db.select().from(categories).where(eq(categories.storeId, storeId));
     if (rows.length === 0) return CATEGORIES;
     return rows
       .map((r) => ({ slug: r.slug, name: r.name, tagline: r.tagline, icon: r.icon, tint: r.tint, sort: r.sort }))
@@ -43,28 +45,32 @@ function rowToProduct(r: DbProductRow): Product {
   };
 }
 
-export async function getProducts(opts?: { category?: string; q?: string; deals?: boolean; sort?: string }): Promise<Product[]> {
+export async function getProducts(
+  opts?: { category?: string; q?: string; deals?: boolean; sort?: string; storeSlug?: string }
+): Promise<Product[]> {
   try {
-    const conds = [];
+    const storeId = await getStoreId(opts?.storeSlug);
+    const conds: any[] = [eq(products.storeId, storeId)];
     if (opts?.category) conds.push(eq(products.categorySlug, opts.category));
     if (opts?.deals) conds.push(eq(products.isDeal, true));
     if (opts?.q) {
       const p = `%${opts.q}%`;
       conds.push(or(like(products.name, p), like(products.latinName, p), like(products.shortDesc, p)));
     }
+    const where: any = and(...conds);
     let rows;
     switch (opts?.sort) {
       case "price-asc":
-        rows = await db.select().from(products).where(conds.length ? sql`${sql.join(conds, sql` AND `)}` : undefined).orderBy(asc(products.price));
+        rows = await db.select().from(products).where(where).orderBy(asc(products.price));
         break;
       case "price-desc":
-        rows = await db.select().from(products).where(conds.length ? sql`${sql.join(conds, sql` AND `)}` : undefined).orderBy(desc(products.price));
+        rows = await db.select().from(products).where(where).orderBy(desc(products.price));
         break;
       case "rating":
-        rows = await db.select().from(products).where(conds.length ? sql`${sql.join(conds, sql` AND `)}` : undefined).orderBy(desc(products.rating));
+        rows = await db.select().from(products).where(where).orderBy(desc(products.rating));
         break;
       default:
-        rows = await db.select().from(products).where(conds.length ? sql`${sql.join(conds, sql` AND `)}` : undefined).orderBy(asc(products.sort));
+        rows = await db.select().from(products).where(where).orderBy(asc(products.sort));
     }
     if (rows.length === 0 && !opts?.q) return fallbackProducts(opts);
     if (rows.length > 0) {
@@ -80,9 +86,14 @@ export async function getProducts(opts?: { category?: string; q?: string; deals?
   }
 }
 
-export async function getProduct(slug: string): Promise<Product | undefined> {
+export async function getProduct(slug: string, storeSlug?: string): Promise<Product | undefined> {
   try {
-    const rows = await db.select().from(products).where(eq(products.slug, slug)).limit(1);
+    const storeId = await getStoreId(storeSlug);
+    const rows = await db
+      .select()
+      .from(products)
+      .where(and(eq(products.storeId, storeId), eq(products.slug, slug)))
+      .limit(1);
     if (rows.length) return rowToProduct(rows[0]);
     return fallbackProduct(slug);
   } catch {
@@ -91,10 +102,9 @@ export async function getProduct(slug: string): Promise<Product | undefined> {
 }
 
 /** Authoritative price lookup used by checkout — never trust client prices. */
-export async function priceMap(): Promise<Record<string, Product>> {
-  const all = await getProducts();
+export async function priceMap(storeSlug?: string): Promise<Record<string, Product>> {
+  const all = await getProducts({ storeSlug });
   return Object.fromEntries(all.map((p) => [p.slug, p]));
 }
 
-/** True when the DB is reachable and the seed has been applied. */
 export { PRODUCTS as SEED_PRODUCTS, CATEGORIES as SEED_CATEGORIES };

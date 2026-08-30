@@ -38,7 +38,7 @@ export async function POST(req: Request) {
     if (payment.status === "paid" && okAmount && okCurrency) {
       await finalizeOrder(orderNumber, payment.id);
       if (Array.isArray(order.cartSnapshot)) {
-        await issueOrderItems(order.id, order.cartSnapshot);
+        await issueOrderItems(order.id, order.storeId, order.cartSnapshot);
       }
       return Response.json({ ok: true, orderNumber: order.orderNumber, email: order.email });
     }

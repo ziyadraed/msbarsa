@@ -21,7 +21,13 @@ export function verifyPassword(password: string, stored: string): boolean {
   return test.length === expected.length && crypto.timingSafeEqual(test, expected);
 }
 
-export type SafeUser = { id: string; name: string; email: string };
+export type SafeUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: "customer" | "merchant" | "admin";
+  storeId: string | null;
+};
 
 export async function getSessionUser(): Promise<SafeUser | null> {
   try {
@@ -37,7 +43,7 @@ export async function getSessionUser(): Promise<SafeUser | null> {
       .limit(1);
     if (!rows.length) return null;
     const u = rows[0].user;
-    return { id: u.id, name: u.name, email: u.email };
+    return { id: u.id, name: u.name, email: u.email, role: u.role, storeId: u.storeId ?? null };
   } catch {
     return null;
   }

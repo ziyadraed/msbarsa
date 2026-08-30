@@ -33,7 +33,7 @@ export async function POST(req: Request) {
     if (payment.amount === toHalalas(Math.round(order.total)) && payment.currency === cfg.currency) {
       await finalizeOrder(order.orderNumber, payment.id);
       if (Array.isArray(order.cartSnapshot)) {
-        await issueOrderItems(order.id, order.cartSnapshot);
+        await issueOrderItems(order.id, order.storeId, order.cartSnapshot);
       }
     }
     return Response.json({ received: true });
