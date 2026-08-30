@@ -1,0 +1,82 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { ListChecks, Loader2, Save, Plus, X } from "lucide-react";
+import { toast } from "sonner";
+
+type Cond = { id: string; coupon: string; field: string; op: string; value: string };
+
+export default function CouponConditionsPage() {
+  const [loaded, setLoaded] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [cond, setCond] = useState<Cond[]>([]);
+  const [coupons, setCoupons] = useState<string[]>([]);
+
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/merchant/settings").then((r) => r.json()),
+      fetch("/api/merchant/coupons").then((r) => r.json()),
+    ]).then(([set, cp]) => {
+      const s = set.store?.settings ?? {};
+      if (Array.isArray(s.couponConditions)) setCond(s.couponConditions as Cond[]);
+      setCoupons((Array.isArray(cp.coupons) ? cp.coupons : []).map((c: any) => c.code));
+    }).finally(() => setLoaded(true));
+  }, []);
+
+  async function save() {
+    setSaving(true);
+    try {
+      const r = await fetch("/api/merchant/settings", {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "مسبار", design: { couponConditions: cond } }),
+      });
+      const d = await r.json();
+      if (!r.ok) return toast.error(d.error || "تعذر الحفظ");
+      toast.success("تم حفظ شروط الكوبونات");
+    } finally { setSaving(false); }
+  }
+
+  const inp = "w-full rounded-xl border border-white/10 bg-ink-900/40 px-3 py-2 text-sm outline-none focus:border-neon-400/50";
+
+  return (
+    <div className="space-y-6 max-w-2xl">
+      <div><h2 className="text-2xl font-bold">شروط كوبون الخصم</h2><p className="text-sm text-ink-300 mt-1">قيّد متى يصلح الكوبون حسب شروط إضافية</p></div>
+      {!loaded ? (
+        <div className="glass rounded-3xl p-10 text-center text-ink-300 text-sm flex items-center justify-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> جارٍ التحميل...</div>
+      ) : (
+        <div className="glass rounded-3xl p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="grid place-items-center w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-500/25 to-teal-400/15 border border-emerald-400/30"><ListChecks className="w-5 h-5 text-emerald-400" /></span>
+              <p className="font-bold text-sm">{cond.length} شرط</p>
+            </div>
+            <button onClick={save} disabled={saving} className="btn-primary rounded-2xl px-5 py-2.5 text-sm font-bold flex items-center gap-2">
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} حفظ
+            </button>
+          </div>
+          <div className="space-y-2">
+            {cond.map((c) => (
+              <div key={c.id} className="grid grid-cols-[1fr_1fr_1fr_auto] gap-2 items-center rounded-xl border border-white/10 bg-ink-900/40 p-2.5">
+                <select className={inp} value={c.coupon} onChange={(e) => setCond((p) => p.map((x) => x.id === c.id ? { ...x, coupon: e.target.value } : x))}>
+                  <option value="">كل الكوبونات</option>
+                  {coupons.map((cp) => <option key={cp} value={cp}>{cp}</option>)}
+                </select>
+                <select className={inp} value={c.field} onChange={(e) => setCond((p) => p.map((x) => x.id === c.id ? { ...x, field: e.target.value } : x))}>
+                  <option value="customer">عميل محدد</option>
+                  <option value="first_order">أول طلب فقط</option>
+                  <option value="category">تصنيف محدد</option>
+                </select>
+                <input className={inp} value={c.value} onChange={(e) => setCond((p) => p.map((x) => x.id === c.id ? { ...x, value: e.target.value } : x))} placeholder="القيمة" />
+                <button type="button" onClick={() => setCond((p) => p.filter((x) => x.id !== c.id))} className="text-ink-300 hover:text-red-400"><X className="w-4 h-4" /></button>
+              </div>
+            ))}
+            {cond.length === 0 && <p className="text-xs text-ink-300/60 border border-dashed border-white/10 rounded-xl p-3 text-center">لا توجد شروط إضافية</p>}
+          </div>
+          <button type="button" onClick={() => setCond((p) => [...p, { id: crypto.randomUUID(), coupon: "", field: "customer", op: "=", value: "" }])} className="w-full flex items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 py-2.5 text-sm text-ink-300 hover:text-neon-400">
+            <Plus className="w-4 h-4" /> إضافة شرط
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
