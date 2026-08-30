@@ -12,10 +12,17 @@ type Order = {
   phone: string;
   total: number;
   subtotal: number;
+  shippingCost: number;
+  discount: number;
+  tax: number;
   status: string;
+  paymentStatus: string;
   paymentMethod: string;
+  paymentId?: string;
+  address?: Record<string, string>;
+  notes?: string;
   createdAt: string;
-  items: { productName: string; qty: number; price: number }[];
+  items: { productName: string; qty: number; price: number; licenseKey?: string }[];
 };
 
 const STATUSES = [
@@ -27,6 +34,7 @@ const STATUSES = [
   { value: "shipped", label: "تم الشحن" },
   { value: "completed", label: "مكتمل" },
   { value: "cancelled", label: "ملغي" },
+  { value: "refunded", label: "مسترجع" },
 ];
 const STATUS_LABEL: Record<string, string> = Object.fromEntries(STATUSES.map((s) => [s.value, s.label]));
 const STATUS_COLOR: Record<string, string> = {
@@ -223,24 +231,69 @@ export default function OrdersPage() {
               </div>
 
               {expanded === o.id && (
-                <div className="mt-4 pt-4 border-t border-white/5">
-                  <p className="text-xs text-ink-300 mb-3 font-semibold">المنتجات</p>
-                  <div className="space-y-2 mb-4">
-                    {(o.items ?? []).map((it, i) => (
-                      <div key={i} className="flex items-center justify-between rounded-2xl bg-white/5 px-4 py-2.5">
-                        <span className="text-sm flex items-center gap-2"><Package className="w-4 h-4 text-neon-400" /> {it.productName}</span>
-                        <span className="font-latin text-xs text-ink-300">×{it.qty} · {it.price} ر.س</span>
-                      </div>
-                    ))}
+                <div className="mt-4 pt-4 border-t border-white/5 grid lg:grid-cols-2 gap-5">
+                  <div>
+                    <p className="text-xs text-ink-300 mb-3 font-semibold">المنتجات ({o.items?.length ?? 0})</p>
+                    <div className="space-y-2 mb-4">
+                      {(o.items ?? []).map((it, i) => (
+                        <div key={i} className="flex items-center justify-between rounded-2xl bg-white/5 px-4 py-2.5">
+                          <span className="text-sm flex items-center gap-2"><Package className="w-4 h-4 text-neon-400" /> {it.productName}</span>
+                          <span className="font-latin text-xs text-ink-300">×{it.qty} · {it.price} ر.س</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Summary */}
+                    <div className="space-y-1.5 text-xs rounded-2xl bg-white/4 px-4 py-3">
+                      <div className="flex justify-between"><span className="text-ink-300">المجموع الفرعي</span><span className="font-latin">{o.subtotal} ر.س</span></div>
+                      {o.shippingCost > 0 && <div className="flex justify-between"><span className="text-ink-300">الشحن</span><span className="font-latin">{o.shippingCost} ر.س</span></div>}
+                      {o.discount > 0 && <div className="flex justify-between text-emerald-400"><span>الخصم</span><span className="font-latin">-{o.discount} ر.س</span></div>}
+                      {o.tax > 0 && <div className="flex justify-between"><span className="text-ink-300">الضريبة</span><span className="font-latin">{o.tax} ر.س</span></div>}
+                      <div className="flex justify-between pt-1.5 border-t border-white/10 font-bold"><span>الإجمالي</span><span className="font-latin text-neon-400">{o.total} ر.س</span></div>
+                    </div>
                   </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-xs text-ink-300">تغيير الحالة:</span>
-                    {["processing", "shipped", "completed", "cancelled"].map((s) => (
-                      <button key={s} onClick={() => changeStatus(o.id, s)} disabled={o.status === s}
-                        className="text-[11px] px-3 py-1.5 rounded-full border border-white/10 bg-white/5 text-ink-300 hover:text-ink-100 disabled:opacity-40 transition-colors">
-                        {STATUS_LABEL[s]}
-                      </button>
-                    ))}
+
+                  <div className="space-y-3">
+                    <div className="rounded-2xl bg-white/4 px-4 py-3 text-xs space-y-1.5">
+                      <p className="text-ink-300 font-semibold mb-1">معلومات الدفع</p>
+                      <div className="flex justify-between"><span className="text-ink-300">الطريقة</span><span className="font-latin">{o.paymentMethod ?? "—"}</span></div>
+                      <div className="flex justify-between"><span className="text-ink-300">حالة الدفع</span><span className={o.paymentStatus === "paid" ? "text-emerald-400" : "text-amber-300"}>{o.paymentStatus === "paid" ? "مدفوع" : o.paymentStatus}</span></div>
+                      {o.paymentId && <div className="flex justify-between"><span className="text-ink-300">مرجع العملية</span><span className="font-latin truncate">{o.paymentId}</span></div>}
+                    </div>
+
+                    {(o.address && Object.keys(o.address).length > 0) && (
+                      <div className="rounded-2xl bg-white/4 px-4 py-3 text-xs space-y-1">
+                        <p className="text-ink-300 font-semibold mb-1">عنوان الشحن</p>
+                        {Object.entries(o.address).map(([k, v]) => (
+                          <div key={k} className="flex justify-between"><span className="text-ink-300">{k}</span><span>{String(v)}</span></div>
+                        ))}
+                      </div>
+                    )}
+
+                    {o.notes && <div className="rounded-2xl bg-white/4 px-4 py-3 text-xs"><span className="text-ink-300 font-semibold">ملاحظات: </span>{o.notes}</div>}
+
+                    {/* License keys */}
+                    {(o.items ?? []).filter((it) => it.licenseKey).length > 0 && (
+                      <div className="rounded-2xl bg-white/4 px-4 py-3 text-xs">
+                        <p className="text-ink-300 font-semibold mb-2">مفاتيح الترخيص</p>
+                        {(o.items ?? []).filter((it) => it.licenseKey).map((it, i) => (
+                          <div key={i} className="flex items-center justify-between py-1">
+                            <span className="truncate">{it.productName}</span>
+                            <span className="font-latin text-emerald-400 truncate ms-2">{it.licenseKey}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                      <span className="text-xs text-ink-300">تغيير الحالة:</span>
+                      {["processing", "shipped", "completed", "cancelled", "refunded"].map((s) => (
+                        <button key={s} onClick={() => changeStatus(o.id, s)} disabled={o.status === s}
+                          className="text-[11px] px-3 py-1.5 rounded-full border border-white/10 bg-white/5 text-ink-300 hover:text-ink-100 disabled:opacity-40 transition-colors">
+                          {STATUS_LABEL[s] ?? s}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}

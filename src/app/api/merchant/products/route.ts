@@ -75,6 +75,45 @@ export async function POST(req: Request) {
   }
 }
 
+export async function PATCH(req: Request) {
+  const { error, storeId } = await requireMerchantStore();
+  if (error) return error;
+  try {
+    const body = await req.json();
+    const id = String(body?.id ?? "");
+    if (!id) return Response.json({ error: "المعرف مطلوب" }, { status: 400 });
+    const found = await db.select().from(products).where(and(eq(products.id, id), eq(products.storeId, storeId))).limit(1);
+    if (!found.length) return Response.json({ error: "منتج غير موجود" }, { status: 404 });
+
+    const name = String(body?.name ?? found[0].name).trim();
+    if (name.length < 2) return Response.json({ error: "اسم المنتج مطلوب" }, { status: 400 });
+
+    await db
+      .update(products)
+      .set({
+        name,
+        latinName: String(body?.latinName ?? found[0].latinName),
+        categorySlug: String(body?.categorySlug ?? found[0].categorySlug),
+        price: body?.price !== undefined ? Math.round(Number(body.price)) : found[0].price,
+        comparePrice: body?.comparePrice !== undefined ? Math.round(Number(body.comparePrice)) || null : found[0].comparePrice,
+        shortDesc: String(body?.shortDesc ?? found[0].shortDesc),
+        longDesc: String(body?.longDesc ?? found[0].longDesc),
+        sku: String(body?.sku ?? found[0].sku),
+        barcode: String(body?.barcode ?? found[0].barcode),
+        stock: body?.stock !== undefined ? Math.round(Number(body.stock) || 0) : found[0].stock,
+        status: String(body?.status ?? found[0].status),
+        type: String(body?.type ?? found[0].type),
+        cost: body?.cost !== undefined ? Math.round(Number(body.cost) || 0) : found[0].cost,
+        updatedAt: new Date(),
+      })
+      .where(eq(products.id, id));
+    return Response.json({ ok: true });
+  } catch (e) {
+    console.error("update product", e);
+    return Response.json({ error: "تعذر الحفظ" }, { status: 500 });
+  }
+}
+
 export async function DELETE(req: Request) {
   const { error, storeId } = await requireMerchantStore();
   if (error) return error;
