@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import MerchantSidebar from "@/components/merchant/sidebar";
@@ -10,12 +9,6 @@ export default async function MerchantLayout({ children }: { children: React.Rea
   return (
     <div className="min-h-screen flex bg-ink-950 text-ink-100">
       <MerchantSidebar />
-
-      {/* Mobile top bar */}
-      <div className="lg:hidden flex items-center justify-between p-4 border-b border-white/8">
-        <p className="font-bold">لوحة التاجر</p>
-        <Link href="/" className="text-sm text-neon-400">المتجر</Link>
-      </div>
 
       {/* Main */}
       <div className="flex-1 min-w-0">
