@@ -125,9 +125,14 @@ export const MERCHANT_NAV: NavGroup[] = [
     ],
   },
   { label: "الإعدادات", icon: Settings, href: "/merchant/settings", items: [
+    { href: "/merchant/settings/hub", label: "مركز الإعدادات الموحد" },
+    { href: "/merchant/settings", label: "بيانات المتجر" },
     { href: "/merchant/settings/plan", label: "الباقة والاشتراك" },
     { href: "/merchant/settings/contact", label: "قنوات التواصل" },
     { href: "/merchant/settings/notifications", label: "الإشعارات" },
+    { href: "/merchant/settings/languages", label: "لغات المتجر" },
+    { href: "/merchant/settings/currencies", label: "العملات" },
+    { href: "/merchant/settings/maintenance", label: "وضع الصيانة" },
   ] },
 ];
 
