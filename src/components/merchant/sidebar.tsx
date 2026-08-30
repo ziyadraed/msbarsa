@@ -52,6 +52,12 @@ export const MERCHANT_NAV: NavGroup[] = [
       { href: "/merchant/products/digital-cards", label: "سجل البطاقات الرقمية" },
       { href: "/merchant/products/import", label: "الاستيراد والتصدير" },
       { href: "/merchant/products/stores", label: "الفروع والمستودعات" },
+      { href: "/merchant/products/digital", label: "إضافة منتج رقمي" },
+      { href: "/merchant/products/pre-order", label: "الطلب المسبق" },
+      { href: "/merchant/products/size-chart", label: "جدول المقاسات" },
+      { href: "/merchant/products/spreadsheet", label: "محرر جدولي" },
+      { href: "/merchant/products/deleted", label: "حذف واستعادة" },
+      { href: "/merchant/products/data-quality", label: "جودة البيانات" },
     ],
   },
   {
