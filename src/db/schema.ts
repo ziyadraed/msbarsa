@@ -287,6 +287,28 @@ export const contactMessages = pgTable("contact_messages", {
 });
 
 // ---------------------------------------------------------------------------
+// Marketing — coupons/discounts, scoped to store
+// ---------------------------------------------------------------------------
+export const coupons = pgTable(
+  "coupons",
+  {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    storeId: text("store_id").notNull(),
+    code: text("code").notNull(),
+    type: text("type").notNull().default("percent"), // percent | fixed | free_shipping
+    value: integer("value").notNull().default(0), // percent or fixed amount
+    minOrder: integer("min_order").notNull().default(0),
+    maxUses: integer("max_uses"),
+    used: integer("used").notNull().default(0),
+    active: boolean("active").notNull().default(true),
+    startsAt: timestamp("starts_at", { withTimezone: true }),
+    endsAt: timestamp("ends_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("coupon_store_code").on(t.storeId, t.code)]
+);
+
+// ---------------------------------------------------------------------------
 // Audit log (security/tenant requirement)
 // ---------------------------------------------------------------------------
 export const auditLogs = pgTable(
