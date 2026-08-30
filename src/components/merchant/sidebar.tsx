@@ -32,6 +32,7 @@ export const MERCHANT_NAV: NavGroup[] = [
       { href: "/merchant/products/variants", label: "خيارات المنتج" },
       { href: "/merchant/products/categories", label: "التصنيفات والخيارات" },
       { href: "/merchant/products/brands", label: "الماركات والعلامات" },
+      { href: "/merchant/products/tags", label: "وسوم المنتجات" },
       { href: "/merchant/products/import", label: "الاستيراد والتصدير" },
       { href: "/merchant/products/stores", label: "الفروع والمستودعات" },
     ],

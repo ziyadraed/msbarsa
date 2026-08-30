@@ -104,6 +104,7 @@ export async function PATCH(req: Request) {
         status: String(body?.status ?? found[0].status),
         type: String(body?.type ?? found[0].type),
         cost: body?.cost !== undefined ? Math.round(Number(body.cost) || 0) : found[0].cost,
+        tags: body?.tags !== undefined ? (body.tags as string[]).map((t) => String(t).trim()).filter(Boolean).slice(0, 10) : found[0].tags,
         updatedAt: new Date(),
       })
       .where(eq(products.id, id));
