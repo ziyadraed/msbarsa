@@ -104,6 +104,24 @@ body {
   backdrop-filter: blur(18px);
 }
 
+.inp {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: #e8eefb;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.inp:focus {
+  border-color: rgba(34, 211, 238, 0.5);
+}
+.inp::placeholder {
+  color: rgba(232, 238, 251, 0.35);
+}
+
 .text-gradient {
   background: linear-gradient(100deg, #7dd3fc 0%, #22d3ee 35%, #a78bfa 70%, #e879f9 100%);
   -webkit-background-clip: text;
