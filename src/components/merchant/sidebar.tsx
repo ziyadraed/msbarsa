@@ -114,6 +114,8 @@ export const MERCHANT_NAV: NavGroup[] = [
   },
   { label: "الإعدادات", icon: Settings, href: "/merchant/settings", items: [
     { href: "/merchant/settings/plan", label: "الباقة والاشتراك" },
+    { href: "/merchant/settings/contact", label: "قنوات التواصل" },
+    { href: "/merchant/settings/notifications", label: "الإشعارات" },
   ] },
 ];
 
