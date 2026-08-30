@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowLeft, AppWindow, FileText, Server, PenTool, ShieldCheck, DraftingCompass, MousePointerClick, CreditCard, KeyRound, BadgeCheck, Headset, RefreshCcw, Lock, Quote } from "lucide-react";
 import Hero from "@/components/home/hero";
 import DealBanner from "@/components/home/deal-banner";
+import ProductCarousel from "@/components/home/product-carousel";
 import Faq from "@/components/home/faq";
 import Reveal from "@/components/store/reveal";
 import ProductCard from "@/components/store/product-card";
@@ -118,6 +119,14 @@ export default async function HomePage() {
           ))}
         </div>
       </section>
+
+      {/* Salla-style best offers carousel */}
+      <ProductCarousel
+        title="عروض الأسبوع"
+        subtitle="تسوّق أبرز العروض بأسعار مميزة — وتنقّل بينها بسهولة"
+        products={featured.slice(8, 19)}
+        displayAllUrl="/shop?deals=1"
+      />
 
       {/* deal of the week */}
       <Reveal>

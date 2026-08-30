@@ -229,6 +229,15 @@ body {
   perspective: 400px;
 }
 
+/* hide scrollbar for carousels (Salla-style product sliders) */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
