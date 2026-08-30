@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { categories, products } from "@/db/schema";
+import { categories, products, brands } from "@/db/schema";
 import { eq, like, or, desc, asc, sql, and } from "drizzle-orm";
 import { getStoreId } from "./tenant";
 import { CATEGORIES, PRODUCTS, fallbackProducts, fallbackProduct, type Category, type Product } from "./catalog";
@@ -108,3 +108,15 @@ export async function priceMap(storeSlug?: string): Promise<Record<string, Produ
 }
 
 export { PRODUCTS as SEED_PRODUCTS, CATEGORIES as SEED_CATEGORIES };
+
+export type Brand = { id: string; slug: string; name: string; logo: string };
+
+export async function getBrands(storeSlug?: string): Promise<Brand[]> {
+  try {
+    const storeId = await getStoreId(storeSlug);
+    const rows = await db.select().from(brands).where(eq(brands.storeId, storeId));
+    return rows.map((r) => ({ id: r.id, slug: r.slug, name: r.name, logo: r.logo }));
+  } catch {
+    return [];
+  }
+}

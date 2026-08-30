@@ -29,7 +29,9 @@ export const MERCHANT_NAV: NavGroup[] = [
       { href: "/merchant/products", label: "إدارة المنتجات" },
       { href: "/merchant/products/inventory", label: "إدارة المخزون" },
       { href: "/merchant/products/transfers", label: "نقل المخزون" },
+      { href: "/merchant/products/variants", label: "خيارات المنتج" },
       { href: "/merchant/products/categories", label: "التصنيفات والخيارات" },
+      { href: "/merchant/products/brands", label: "الماركات والعلامات" },
       { href: "/merchant/products/import", label: "الاستيراد والتصدير" },
       { href: "/merchant/products/stores", label: "الفروع والمستودعات" },
     ],
@@ -62,6 +64,7 @@ export const MERCHANT_NAV: NavGroup[] = [
       { href: "/merchant/customers", label: "إدارة العملاء" },
       { href: "/merchant/customers/groups", label: "إدارة المجموعات" },
       { href: "/merchant/customers/import", label: "استيراد العملاء" },
+      { href: "/merchant/customers/messages", label: "رسائل العملاء" },
     ],
   },
   {
@@ -109,7 +112,9 @@ export const MERCHANT_NAV: NavGroup[] = [
       { href: "/merchant/logs/deleted", label: "سجل المحذوفات" },
     ],
   },
-  { label: "الإعدادات", icon: Settings, href: "/merchant/settings", items: [] },
+  { label: "الإعدادات", icon: Settings, href: "/merchant/settings", items: [
+    { href: "/merchant/settings/plan", label: "الباقة والاشتراك" },
+  ] },
 ];
 
 export default function MerchantSidebar() {
