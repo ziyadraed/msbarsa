@@ -5,6 +5,7 @@ import { Toaster } from "sonner";
 import { CartProvider } from "@/components/store/cart-provider";
 import SiteHeader from "@/components/store/site-header";
 import SiteFooter from "@/components/store/site-footer";
+import StoreSettingsInjector from "@/components/store/store-settings-injector";
 import "./globals.css";
 
 const arabic = IBM_Plex_Sans_Arabic({
@@ -33,6 +34,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="ar" dir="rtl" className={`${arabic.variable} ${grotesk.variable}`}>
       <body className="bg-ink-950 text-ink-100 antialiased min-h-screen flex flex-col">
+        <StoreSettingsInjector />
         <CartProvider>
           <SiteHeader />
           <main className="flex-1">{children}</main>
