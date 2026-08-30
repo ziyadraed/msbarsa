@@ -106,6 +106,12 @@ export const MERCHANT_NAV: NavGroup[] = [
     items: [
       { href: "/merchant/store/design", label: "تصميم المتجر" },
       { href: "/merchant/store/themes", label: "متجر الثيمات" },
+      { href: "/merchant/store/themes/shop", label: "البحث عن ثيم" },
+      { href: "/merchant/store/themes/copies", label: "نسخ الثيم" },
+      { href: "/merchant/store/themes/elements", label: "عناصر الثيم" },
+      { href: "/merchant/store/themes/promo-bar", label: "الشريط الترويجي" },
+      { href: "/merchant/store/themes/dev-requests", label: "طلبات تطوير الثيم" },
+      { href: "/merchant/store/themes/services", label: "خدمات تخصيص الثيم" },
       { href: "/merchant/store/domain", label: "دومين المتجر" },
       { href: "/merchant/store/pages", label: "الصفحات التعريفية" },
       { href: "/merchant/store/landing", label: "صفحات الهبوط" },
@@ -197,6 +203,8 @@ export const MERCHANT_NAV: NavGroup[] = [
     label: "الأدوات المساعدة", icon: Wrench, href: "/merchant/tools",
     items: [
       { href: "/merchant/tools/apps", label: "متجر التطبيقات" },
+      { href: "/merchant/tools/apps/shop", label: "البحث عن تطبيق" },
+      { href: "/merchant/tools/apps/manage", label: "التطبيقات المثبتة" },
       { href: "/merchant/tools/developer", label: "أدوات المطور" },
     ],
   },
