@@ -54,6 +54,23 @@ export async function POST(req: Request) {
   }
 }
 
+export async function PATCH(req: Request) {
+  const { error, storeId } = await merchantStore();
+  if (error) return error;
+  try {
+    const body = await req.json();
+    const id = String(body?.id ?? "");
+    if (!id) return Response.json({ error: "المعرف مطلوب" }, { status: 400 });
+    const found = await db.select().from(coupons).where(and(eq(coupons.id, id), eq(coupons.storeId, storeId))).limit(1);
+    if (!found.length) return Response.json({ error: "غير موجود" }, { status: 404 });
+    const active = body?.active !== undefined ? !!body.active : !found[0].active;
+    await db.update(coupons).set({ active }).where(eq(coupons.id, id));
+    return Response.json({ ok: true, active });
+  } catch {
+    return Response.json({ error: "تعذر التحديث" }, { status: 500 });
+  }
+}
+
 export async function DELETE(req: Request) {
   const { error, storeId } = await merchantStore();
   if (error) return error;

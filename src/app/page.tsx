@@ -3,6 +3,7 @@ import { ArrowLeft, AppWindow, FileText, Server, PenTool, ShieldCheck, DraftingC
 import Hero from "@/components/home/hero";
 import DealBanner from "@/components/home/deal-banner";
 import ProductCarousel from "@/components/home/product-carousel";
+import StoreFeatures from "@/components/home/store-features";
 import Faq from "@/components/home/faq";
 import Reveal from "@/components/store/reveal";
 import ProductCard from "@/components/store/product-card";
@@ -60,6 +61,9 @@ export default async function HomePage() {
   return (
     <>
       <Hero />
+
+      {/* Salla-style trust/features strip */}
+      <StoreFeatures />
 
       {/* categories */}
       <section className="mx-auto max-w-7xl px-4 py-20">

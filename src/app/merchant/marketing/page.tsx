@@ -68,6 +68,19 @@ export default function MarketingPage() {
     }
   }
 
+  async function toggle(c: Coupon) {
+    const r = await fetch("/api/merchant/coupons", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: c.id, active: !c.active }),
+    });
+    const d = await r.json();
+    if (r.ok) {
+      toast.success(d.active ? "تم التفعيل" : "تم الإيقاف");
+      setCoupons((prev) => prev.map((x) => (x.id === c.id ? { ...x, active: d.active } : x)));
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -148,6 +161,12 @@ export default function MarketingPage() {
                 <span className={`text-xs px-2.5 py-1 rounded-full border ${c.active ? "bg-emerald-400/10 text-emerald-400 border-emerald-400/20" : "bg-white/5 text-ink-300 border-white/10"}`}>
                   {c.active ? "مفعّل" : "معطّل"}
                 </span>
+                <button
+                  onClick={() => toggle(c)}
+                  className={`rounded-xl px-3 py-2 text-xs font-semibold border ${c.active ? "border-white/10 text-ink-300 hover:text-amber-300" : "border-emerald-400/30 text-emerald-300 hover:bg-emerald-400/10"}`}
+                >
+                  {c.active ? "إيقاف" : "تفعيل"}
+                </button>
                 <button onClick={() => remove(c.id)} className="btn-ghost rounded-xl p-2 text-rose-300"><Trash2 className="w-4 h-4" /></button>
               </div>
             ))}
