@@ -2,6 +2,7 @@ import { requireRole } from "@/lib/guard";
 import { getStoreStats, getLatestOrders, getBestSellers, getOrdersByStatus } from "@/lib/dash";
 import { getStoreBySlug } from "@/lib/tenant";
 import { formatSAR } from "@/lib/utils";
+import MerchantSectionsMap from "@/components/merchant/sections-map";
 import { Wallet, ShoppingBag, Users, Package, AlertTriangle, ArrowLeft, TrendingUp, Store } from "lucide-react";
 import Link from "next/link";
 
@@ -63,6 +64,9 @@ export default async function MerchantDashboardPage() {
           <ArrowLeft className="w-4 h-4" />
         </Link>
       </div>
+
+      {/* Sections navigation map */}
+      <MerchantSectionsMap />
 
       {/* KPI cards */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
