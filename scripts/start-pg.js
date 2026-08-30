@@ -4,7 +4,7 @@ const { Pool } = require("pg");
 
 async function main() {
   const pg = new EmbeddedPostgres({
-    databaseDir: process.env.PGDATA || "/home/user/.pgdata",
+    databaseDir: process.env.PGDATA || "/home/user/.pgdata2",
     user: "postgres",
     password: "postgres",
     port: 5432,
@@ -12,7 +12,7 @@ async function main() {
   });
 
   const fs = require("fs");
-  const dataDir = process.env.PGDATA || "/home/user/.pgdata";
+  const dataDir = process.env.PGDATA || "/home/user/.pgdata2";
   const alreadyInit = fs.existsSync(`${dataDir}/PG_VERSION`);
 
   if (!alreadyInit) {
