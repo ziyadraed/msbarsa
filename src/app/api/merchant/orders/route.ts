@@ -67,8 +67,16 @@ export async function POST(req: Request) {
     const customerName = String(body?.customerName ?? "").trim();
     const email = String(body?.email ?? "").trim().toLowerCase();
     const phone = String(body?.phone ?? "").trim();
-    const lines: { slug: string; name: string; categorySlug: string; price: number; qty: number }[] =
-      Array.isArray(body?.items) ? body.items : [];
+    const raw = Array.isArray(body?.items) ? body.items : Array.isArray(body?.lines) ? body.lines : [];
+    const lines: { slug: string; name: string; categorySlug: string; price: number; qty: number }[] = raw.map(
+      (l: { slug?: string; name?: string; categorySlug?: string; price?: number; qty?: number }) => ({
+        slug: String(l?.slug ?? ""),
+        name: String(l?.name ?? ""),
+        categorySlug: String(l?.categorySlug ?? "windows"),
+        price: Number(l?.price ?? 0),
+        qty: Number(l?.qty ?? 1),
+      })
+    );
 
     if (customerName.length < 2) return Response.json({ error: "اسم العميل مطلوب" }, { status: 400 });
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email))
