@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { contactMessages } from "@/db/schema";
-import { eq, desc, or } from "drizzle-orm";
+import { eq, desc, or, and } from "drizzle-orm";
 import { getSessionUser } from "@/lib/auth";
 import { getStoreId } from "@/lib/tenant";
 
@@ -16,13 +16,16 @@ async function merchantStore() {
   return { error: null, storeId };
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   const { error, storeId } = await merchantStore();
   if (error) return error;
+  const kind = new URL(req.url).searchParams.get("kind");
+  const conds = [or(eq(contactMessages.storeId, storeId), eq(contactMessages.storeId, ""))];
+  if (kind) conds.push(eq(contactMessages.kind, kind));
   const rows = await db
     .select()
     .from(contactMessages)
-    .where(or(eq(contactMessages.storeId, storeId), eq(contactMessages.storeId, "")))
+    .where(conds.length === 1 ? conds[0] : and(...conds))
     .orderBy(desc(contactMessages.createdAt))
     .limit(200);
   return Response.json({ messages: rows });

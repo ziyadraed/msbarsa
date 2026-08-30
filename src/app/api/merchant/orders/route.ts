@@ -45,13 +45,18 @@ export async function PATCH(req: Request) {
     const body = await req.json();
     const orderId = String(body?.orderId ?? "");
     const status = String(body?.status ?? "");
+    const notes = body?.notes !== undefined ? String(body.notes) : undefined;
     const valid = ["paid", "awaiting_payment", "processing", "ready", "shipped", "completed", "cancelled", "refunded"];
-    if (!orderId || !valid.includes(status))
+    if (!orderId) return Response.json({ error: "بيانات غير صالحة" }, { status: 400 });
+    if (status && !valid.includes(status))
       return Response.json({ error: "بيانات غير صالحة" }, { status: 400 });
     // scope to store
     const found = await db.select({ id: orders.id }).from(orders).where(and(eq(orders.id, orderId), eq(orders.storeId, storeId))).limit(1);
     if (!found.length) return Response.json({ error: "الطلب غير موجود" }, { status: 404 });
-    await db.update(orders).set({ status }).where(eq(orders.id, orderId));
+    const patch: Record<string, unknown> = {};
+    if (status) patch.status = status;
+    if (notes !== undefined) patch.notes = notes;
+    await db.update(orders).set(patch).where(eq(orders.id, orderId));
     return Response.json({ ok: true });
   } catch {
     return Response.json({ error: "تعذر التحديث" }, { status: 500 });
