@@ -133,6 +133,12 @@ export const MERCHANT_NAV: NavGroup[] = [
     { href: "/merchant/settings/languages", label: "لغات المتجر" },
     { href: "/merchant/settings/currencies", label: "العملات" },
     { href: "/merchant/settings/maintenance", label: "وضع الصيانة" },
+    { href: "/merchant/settings/bank", label: "الحساب البنكي" },
+    { href: "/merchant/settings/customs-fees", label: "الرسوم الجمركية" },
+    { href: "/merchant/settings/subdomain", label: "الدومين الفرعي" },
+    { href: "/merchant/settings/domain-email", label: "بريد الدومين" },
+    { href: "/merchant/settings/custom-links", label: "الروابط المخصصة" },
+    { href: "/merchant/settings/translation", label: "الترجمة" },
   ] },
 ];
 

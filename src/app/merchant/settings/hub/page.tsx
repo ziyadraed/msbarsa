@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   Store, Coins, Languages, Wrench, Globe, Receipt, Bell, Contact, CreditCard, ChevronLeft, Crown,
+  Landmark, Truck, Link2, Mail, Hash,
 } from "lucide-react";
 
 // Unified settings center — single access point to all store settings groups.
@@ -15,10 +16,18 @@ const GROUPS = [
     { href: "/merchant/settings/currencies", label: "العملات", icon: Coins, desc: "العملات والعملة الافتراضية" },
     { href: "/merchant/settings/maintenance", label: "وضع الصيانة", icon: Wrench, desc: "إيقاف المتجر مؤقتًا" },
     { href: "/merchant/settings/notifications", label: "الإشعارات", icon: Bell, desc: "تفضيلات التنبيهات" },
+    { href: "/merchant/settings/translation", label: "الترجمة", icon: Hash, desc: "ترجمة نصوص المتجر" },
+    { href: "/merchant/settings/custom-links", label: "الروابط المخصصة", icon: Link2, desc: "روابط قائمة المتجر" },
+  ]},
+  { title: "المالية والملكية", items: [
+    { href: "/merchant/settings/bank", label: "الحساب البنكي", icon: Landmark, desc: "بيانات التحويل البنكي" },
+    { href: "/merchant/settings/customs-fees", label: "الرسوم الجمركية", icon: Truck, desc: "رسوم الطلبات الدولية" },
+    { href: "/merchant/payments/tax", label: "الضرائب", icon: Receipt, desc: "نسبة الضريبة والرقم الضريبي" },
   ]},
   { title: "العمليات", items: [
-    { href: "/merchant/payments/tax", label: "الضرائب", icon: Receipt, desc: "نسبة الضريبة والرقم الضريبي" },
-    { href: "/merchant/store/domain", label: "الدومين", icon: Globe, desc: "رابط المتجر والدومين المخصص" },
+    { href: "/merchant/settings/subdomain", label: "الدومين الفرعي", icon: Globe, desc: "رابط المتجر المجاني" },
+    { href: "/merchant/settings/domain-email", label: "بريد الدومين", icon: Mail, desc: "عناوين بريد مخصصة" },
+    { href: "/merchant/store/domain", label: "الدومين", icon: CreditCard, desc: "الدومين المخصص" },
     { href: "/merchant/shipping/settings", label: "الشحن", icon: CreditCard, desc: "طرق وأسعار الشحن" },
   ]},
 ];
