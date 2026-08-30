@@ -95,8 +95,12 @@ export const MERCHANT_NAV: NavGroup[] = [
     label: "العملاء", icon: Users, href: "/merchant/customers",
     items: [
       { href: "/merchant/customers", label: "إدارة العملاء" },
+      { href: "/merchant/customers/customer", label: "بطاقة العميل" },
+      { href: "/merchant/customers/new", label: "إنشاء عميل" },
       { href: "/merchant/customers/groups", label: "إدارة المجموعات" },
       { href: "/merchant/customers/import", label: "استيراد العملاء" },
+      { href: "/merchant/customers/export", label: "تصدير العملاء" },
+      { href: "/merchant/customers/settings", label: "إعدادات العملاء" },
       { href: "/merchant/customers/bulk", label: "الإجراءات الجماعية" },
       { href: "/merchant/customers/messages", label: "رسائل العملاء" },
     ],

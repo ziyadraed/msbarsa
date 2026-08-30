@@ -30,6 +30,34 @@ export async function GET(req: Request) {
   return Response.json({ customers: rows });
 }
 
+export async function POST(req: Request) {
+  const { error, storeId } = await merchantStore();
+  if (error) return error;
+  try {
+    const body = await req.json();
+    const name = String(body?.name ?? "").trim();
+    const email = String(body?.email ?? "").trim();
+    if (name.length < 2 || email.length < 3) return Response.json({ error: "الاسم والبريد مطلوبان" }, { status: 400 });
+    const [row] = await db
+      .insert(customers)
+      .values({
+        storeId,
+        name,
+        email,
+        phone: String(body?.phone ?? ""),
+        address: body?.city ? { city: String(body.city) } : {},
+        notes: String(body?.notes ?? ""),
+        totalSpent: 0,
+        orderCount: 0,
+        tags: [],
+      })
+      .returning();
+    return Response.json({ ok: true, customer: row });
+  } catch {
+    return Response.json({ error: "تعذر إنشاء العميل" }, { status: 500 });
+  }
+}
+
 export async function PATCH(req: Request) {
   const { error, storeId } = await merchantStore();
   if (error) return error;
