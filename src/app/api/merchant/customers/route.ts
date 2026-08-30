@@ -49,3 +49,19 @@ export async function PATCH(req: Request) {
     return Response.json({ error: "تعذر الحفظ" }, { status: 500 });
   }
 }
+
+export async function DELETE(req: Request) {
+  const { error, storeId } = await merchantStore();
+  if (error) return error;
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id") ?? "";
+    if (!id) return Response.json({ error: "المعرف مطلوب" }, { status: 400 });
+    const found = await db.select({ id: customers.id }).from(customers).where(and(eq(customers.id, id), eq(customers.storeId, storeId))).limit(1);
+    if (!found.length) return Response.json({ error: "عميل غير موجود" }, { status: 404 });
+    await db.delete(customers).where(eq(customers.id, id));
+    return Response.json({ ok: true });
+  } catch {
+    return Response.json({ error: "تعذر الحذف" }, { status: 500 });
+  }
+}
