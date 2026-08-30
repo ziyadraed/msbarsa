@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Package, RefreshCw, Loader2, Search, Save, X } from "lucide-react";
+import { Plus, Package, RefreshCw, Loader2, Search, Save, X, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 type Product = {
@@ -44,6 +44,15 @@ export default function ProductsPage() {
   useEffect(() => {
     load();
   }, []);
+
+  async function removeProduct(id: string, name: string) {
+    if (!confirm(`حذف المنتج «${name}» نهائيًا؟`)) return;
+    const r = await fetch(`/api/merchant/products?id=${id}`, { method: "DELETE" });
+    const d = await r.json();
+    if (!r.ok) return toast.error(d.error || "فشل الحذف");
+    toast.success("تم حذف المنتج");
+    load();
+  }
 
   async function createProduct(e: React.FormEvent) {
     e.preventDefault();
@@ -155,6 +164,7 @@ export default function ProductsPage() {
                   <p className="font-latin font-bold text-sm">{p.price} ر.س</p>
                   <p className="text-[11px] text-ink-300">مخزون: {p.stock}</p>
                 </div>
+                <button onClick={() => removeProduct(p.id, p.name)} className="btn-ghost rounded-xl p-2 text-rose-300 shrink-0"><Trash2 className="w-4 h-4" /></button>
               </div>
             ))}
           </div>
