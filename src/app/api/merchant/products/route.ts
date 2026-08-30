@@ -105,6 +105,10 @@ export async function PATCH(req: Request) {
         type: String(body?.type ?? found[0].type),
         cost: body?.cost !== undefined ? Math.round(Number(body.cost) || 0) : found[0].cost,
         tags: body?.tags !== undefined ? (body.tags as string[]).map((t) => String(t).trim()).filter(Boolean).slice(0, 10) : found[0].tags,
+        customFields: body?.customFields !== undefined ? body.customFields : found[0].customFields,
+        minQty: body?.minQty !== undefined ? Math.max(0, Math.round(Number(body.minQty))) : found[0].minQty,
+        maxQty: body?.maxQty !== undefined && Number(body.maxQty) > 0 ? Math.round(Number(body.maxQty)) : null,
+        sort: body?.sort !== undefined ? Math.round(Number(body.sort)) : found[0].sort,
         updatedAt: new Date(),
       })
       .where(eq(products.id, id));
