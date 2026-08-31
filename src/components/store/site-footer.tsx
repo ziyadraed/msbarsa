@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { Radar, Send, MapPin, Mail, Clock3, ShieldCheck } from "lucide-react";
@@ -35,9 +35,38 @@ const LINKS = [
   },
 ];
 
+// Column that also lists the merchant's custom informative pages (from /p/[slug]).
+export function MerchantInfoLinks({ pages }: { pages: { slug: string; title: string }[] }) {
+  if (!pages.length) return null;
+  return (
+    <div>
+      <p className="font-bold mb-4 text-white">صفحات المتجر</p>
+      <ul className="space-y-2.5">
+        {pages.map((p) => (
+          <li key={p.slug}>
+            <Link href={`/p/${p.slug}`} className="text-sm text-ink-300 hover:text-neon-400 transition-colors">
+              {p.title}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 export default function SiteFooter() {
   const [email, setEmail] = useState("");
   const [sending, setSending] = useState(false);
+  const [customPages, setCustomPages] = useState<{ slug: string; title: string }[]>([]);
+
+  useEffect(() => {
+    fetch("/api/site/pages")
+      .then((r) => r.json())
+      .then((d) => {
+        if (Array.isArray(d.pages)) setCustomPages(d.pages.slice(0, 4));
+      })
+      .catch(() => {});
+  }, []);
 
   const subscribe = async () => {
     if (!email.trim()) return;
@@ -117,6 +146,7 @@ export default function SiteFooter() {
                 </ul>
               </div>
             ))}
+            <MerchantInfoLinks pages={customPages} />
           </div>
         </div>
 
