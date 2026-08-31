@@ -27,7 +27,12 @@ export default function LoginPage() {
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || "تعذر تسجيل الدخول");
       toast.success(`مرحبًا بعودتك، ${d.user.name.split(" ")[0]}`);
-      router.push("/account");
+      // Merchants/admins go straight to their panel; customers to their account.
+      if (d.user.role === "merchant" || d.user.role === "admin") {
+        router.push("/merchant");
+      } else {
+        router.push("/account");
+      }
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "تعذر تسجيل الدخول");
