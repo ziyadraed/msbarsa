@@ -15,6 +15,13 @@
       "when": 1788082847332,
       "tag": "0001_merchant-marketing-coupons",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788136774418,
+      "tag": "0002_order-coupon",
+      "breakpoints": true
     }
   ]
 }

@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CreditCard, Smartphone, Lock, ShieldCheck, ArrowLeft, Loader2, BadgeCheck, CircleAlert, BadgeDollarSign } from "lucide-react";
+import { CreditCard, Smartphone, Lock, ShieldCheck, ArrowLeft, Loader2, BadgeCheck, CircleAlert, BadgeDollarSign, TicketPercent, X } from "lucide-react";
+import { toast } from "sonner";
 import { useCart } from "@/components/store/cart-provider";
 import { formatSAR, luhnValid, validEmail, cn } from "@/lib/utils";
 
@@ -77,6 +78,11 @@ export default function CheckoutPage() {
   const [holder, setHolder] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // coupon state
+  const [couponInput, setCouponInput] = useState("");
+  const [coupon, setCoupon] = useState<{ code: string; type: string; value: number; discount: number; total: number } | null>(null);
+  const [applyingCoupon, setApplyingCoupon] = useState(false);
+
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -98,6 +104,38 @@ export default function CheckoutPage() {
     return null;
   };
 
+  const cartItemsPayload = () => cart.items.map((i) => ({ slug: i.slug, qty: i.qty }));
+
+  const applyCoupon = async () => {
+    const code = couponInput.trim();
+    if (!code) return setError("أدخل كود الخصم");
+    setError(null);
+    setApplyingCoupon(true);
+    try {
+      const res = await fetch("/api/coupon/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, items: cartItemsPayload() }),
+      });
+      const d = await res.json();
+      if (!res.ok) {
+        setCoupon(null);
+        return setError(d.error || "كود الخصم غير صالح");
+      }
+      setCoupon(d);
+      toast.success(`تم تطبيق الخصم: -${formatSAR(d.discount)}`);
+    } catch {
+      setError("تعذر التحقق من الكوبون");
+    } finally {
+      setApplyingCoupon(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setCoupon(null);
+    setCouponInput("");
+  };
+
   /* ---------------- real gateway flow ---------------- */
   const startMoyasar = async () => {
     const v = contactValid();
@@ -113,7 +151,8 @@ export default function CheckoutPage() {
           name: name.trim(),
           email: email.trim(),
           phone: phone.trim(),
-          items: cart.items.map((i) => ({ slug: i.slug, qty: i.qty })),
+          items: cartItemsPayload(),
+          coupon: coupon?.code ?? "",
         }),
       });
       const d = await res.json();
@@ -174,7 +213,8 @@ export default function CheckoutPage() {
           email: email.trim(),
           phone: phone.trim(),
           paymentMethod: method,
-          items: cart.items.map((i) => ({ slug: i.slug, qty: i.qty })),
+          items: cartItemsPayload(),
+          coupon: coupon?.code ?? "",
         }),
       });
       const data = await res.json();
@@ -203,6 +243,7 @@ export default function CheckoutPage() {
   }
 
   const liveGateway = gateway?.enabled === true;
+  const effectiveTotal = coupon ? coupon.total : cart.subtotal;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-12">
@@ -275,7 +316,7 @@ export default function CheckoutPage() {
                     ) : (
                       <>
                         <Lock className="w-4.5 h-4.5" />
-                        المتابعة إلى الدفع الآمن — {formatSAR(cart.subtotal)}
+                        المتابعة إلى الدفع الآمن — {formatSAR(effectiveTotal)}
                       </>
                     )}
                   </button>
@@ -374,7 +415,7 @@ export default function CheckoutPage() {
                   ) : (
                     <>
                       <Lock className="w-4.5 h-4.5" />
-                      تأكيد الطلب — {formatSAR(cart.subtotal)}
+                      تأكيد الطلب — {formatSAR(effectiveTotal)}
                     </>
                   )}
                 </button>
@@ -397,14 +438,57 @@ export default function CheckoutPage() {
               </li>
             ))}
           </ul>
+
+          {/* coupon */}
+          <div className="mb-5">
+            {coupon ? (
+              <div className="flex items-center justify-between rounded-2xl border border-emerald-400/40 bg-emerald-400/10 px-4 py-3 text-sm">
+                <span className="flex items-center gap-2 font-semibold text-emerald-300">
+                  <TicketPercent className="w-4 h-4" />
+                  {coupon.code}
+                  <span className="text-emerald-200/70 font-normal">-{formatSAR(coupon.discount)}</span>
+                </span>
+                <button onClick={removeCoupon} className="text-ink-300 hover:text-red-400" aria-label="إزالة الكوبون">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  value={couponInput}
+                  onChange={(e) => setCouponInput(e.target.value)}
+                  placeholder="كود الخصم"
+                  className="field flex-1 uppercase font-latin tracking-wider text-left"
+                  dir="ltr"
+                  disabled={!!session}
+                />
+                <button
+                  type="button"
+                  onClick={applyCoupon}
+                  disabled={applyingCoupon || !!session}
+                  className="btn-ghost rounded-xl px-4 text-sm font-semibold flex items-center gap-2 disabled:opacity-60"
+                >
+                  {applyingCoupon ? <Loader2 className="w-4 h-4 animate-spin" /> : <TicketPercent className="w-4 h-4" />}
+                  تطبيق
+                </button>
+              </div>
+            )}
+          </div>
+
           <div className="border-t border-white/10 pt-4 space-y-2.5 text-sm">
             <div className="flex justify-between text-ink-300">
               <span>رسوم التسليم الرقمي</span>
               <span className="text-emerald-400 font-semibold">مجانًا</span>
             </div>
+            {coupon && (
+              <div className="flex justify-between text-emerald-300">
+                <span>الخصم ({coupon.code})</span>
+                <span className="font-semibold">-{formatSAR(coupon.discount)}</span>
+              </div>
+            )}
             <div className="flex justify-between items-end pt-2">
               <span className="font-bold">الإجمالي</span>
-              <span className="text-3xl font-bold font-latin text-gradient">{formatSAR(cart.subtotal)}</span>
+              <span className="text-3xl font-bold font-latin text-gradient">{formatSAR(effectiveTotal)}</span>
             </div>
           </div>
 

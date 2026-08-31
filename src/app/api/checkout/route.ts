@@ -1,5 +1,6 @@
 import { db } from "@/db";
-import { orders, orderItems } from "@/db/schema";
+import { coupons, orders, orderItems } from "@/db/schema";
+import { and, eq, sql } from "drizzle-orm";
 import { priceMap } from "@/lib/data";
 import { generateLicenseKey, generateOrderNumber, validEmail } from "@/lib/utils";
 import { getSessionUser } from "@/lib/auth";
@@ -16,6 +17,7 @@ export async function POST(req: Request) {
     const email = String(body?.email ?? "").trim().toLowerCase();
     const phone = String(body?.phone ?? "").trim();
     const paymentMethod = ["card", "mada", "applepay"].includes(body?.paymentMethod) ? body.paymentMethod : "card";
+    const couponCode = String(body?.coupon ?? "").trim().toUpperCase().replace(/\s+/g, "");
     const items: CartLine[] = Array.isArray(body?.items) ? body.items : [];
 
     if (!name || name.length < 2) {
@@ -42,10 +44,43 @@ export async function POST(req: Request) {
     }
 
     const subtotal = lines.reduce((s, l) => s + l.price * l.qty, 0);
-    const total = subtotal;
+
+    const storeId = await getStoreId();
+    const now = new Date();
+
+    // Coupon resolution (percent / fixed / free_shipping), validated server-side.
+    let discount = 0;
+    let appliedCoupon = "";
+    if (couponCode) {
+      const rows = await db
+        .select()
+        .from(coupons)
+        .where(and(eq(coupons.storeId, storeId), eq(coupons.code, couponCode)))
+        .limit(1);
+      const c = rows[0];
+      const stillActive = c && c.active !== false;
+      const withinWindow = !c ||
+        ((c.startsAt ? c.startsAt <= now : true) && (c.endsAt ? c.endsAt >= now : true));
+      const withinUses = !c?.maxUses || (c.used ?? 0) < c.maxUses;
+      if (!c || !stillActive || !withinWindow || !withinUses) {
+        return Response.json({ error: "كود الخصم غير صالح أو منتهي" }, { status: 400 });
+      }
+      if (subtotal < (c.minOrder ?? 0)) {
+        return Response.json({ error: `كود الخصم يتطلب حدًا أدنى للطلب ${c.minOrder} ر.س` }, { status: 400 });
+      }
+      if (c.type === "percent") {
+        discount = Math.round((subtotal * c.value) / 100);
+      } else if (c.type === "fixed") {
+        discount = Math.min(c.value, subtotal);
+      } else if (c.type === "free_shipping") {
+        discount = 0; // shipping handled elsewhere; keeps the coupon valid
+      }
+      appliedCoupon = c.code;
+    }
+
+    const total = Math.max(0, subtotal - discount);
 
     const user = await getSessionUser();
-    const storeId = await getStoreId();
     const orderNumber = generateOrderNumber();
 
     const [order] = await db
@@ -59,11 +94,20 @@ export async function POST(req: Request) {
         phone,
         paymentMethod,
         subtotal,
-        discount: 0,
+        discount,
         total,
         status: "paid",
+        couponCode: appliedCoupon || null,
       })
       .returning({ id: orders.id });
+
+    // Increment coupon usage counter atomically.
+    if (appliedCoupon) {
+      await db
+        .update(coupons)
+        .set({ used: sql`${coupons.used} + 1` })
+        .where(and(eq(coupons.storeId, storeId), eq(coupons.code, appliedCoupon)));
+    }
 
     for (const line of lines) {
       for (let i = 0; i < line.qty; i++) {
@@ -80,7 +124,7 @@ export async function POST(req: Request) {
       }
     }
 
-    return Response.json({ ok: true, orderNumber, email });
+    return Response.json({ ok: true, orderNumber, email, discount, total });
   } catch (e) {
     console.error("checkout error", e);
     return Response.json({ error: "تعذر إتمام الطلب الآن. حاول مرة أخرى." }, { status: 500 });

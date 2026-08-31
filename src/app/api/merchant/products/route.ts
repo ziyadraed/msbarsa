@@ -44,7 +44,13 @@ export async function POST(req: Request) {
     if (name.length < 2) return Response.json({ error: "اسم المنتج مطلوب" }, { status: 400 });
     if (!price || price <= 0) return Response.json({ error: "سعر غير صالح" }, { status: 400 });
 
-    const slug = `${name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40)}-${Date.now().toString(36)}`;
+    // Prefer latinName for the URL slug (Arabic names have no latin letters);
+    // fall back to a short random slug if neither yields latin characters.
+    const latinBase = (body?.latinName ? String(body.latinName) : "")
+      .toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40);
+    const nameBase = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40);
+    const slugBase = latinBase || nameBase || `p-${Date.now().toString(36)}`;
+    const slug = `${slugBase}-${Date.now().toString(36)}`;
 
     const [row] = await db
       .insert(products)
