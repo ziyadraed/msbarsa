@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Box, Mail, BarChart3, Megaphone, Wallet, Headset, Check, ExternalLink } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Box, Mail, BarChart3, Megaphone, Wallet, Headset, Check, ExternalLink, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 const APPS = [
@@ -14,14 +14,40 @@ const APPS = [
 ];
 
 export default function AppsPage() {
+  const [loaded, setLoaded] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [installed, setInstalled] = useState<string[]>(["analytics", "wallet"]);
 
+  useEffect(() => {
+    fetch("/api/merchant/apps")
+      .then((r) => r.json())
+      .then((d) => setInstalled(Array.isArray(d.installed) ? d.installed : []))
+      .catch(() => {})
+      .finally(() => setLoaded(true));
+  }, []);
+
+  async function persist(next: string[]) {
+    setInstalled(next);
+    setSaving(true);
+    try {
+      const r = await fetch("/api/merchant/apps", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ installed: next }),
+      });
+      const d = await r.json();
+      if (!r.ok) return toast.error(d.error || "تعذر الحفظ");
+    } catch {
+      toast.error("خطأ في الاتصال");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   function toggle(id: string) {
-    setInstalled((prev) => {
-      const on = prev.includes(id);
-      toast.success(on ? "تم إلغاء تثبيت التطبيق" : "تم تثبيت التطبيق");
-      return on ? prev.filter((x) => x !== id) : [...prev, id];
-    });
+    const on = installed.includes(id);
+    toast.success(on ? "تم إلغاء تثبيت التطبيق" : "تم تثبيت التطبيق");
+    persist(on ? installed.filter((x) => x !== id) : [...installed, id]);
   }
 
   return (
@@ -29,6 +55,11 @@ export default function AppsPage() {
       <div>
         <h2 className="text-2xl font-bold">متجر التطبيقات</h2>
         <p className="text-sm text-ink-300 mt-1">وسّع قدرات متجرك بتطبيقات مسبار</p>
+        {saving && (
+          <span className="mt-2 inline-flex items-center gap-1.5 text-[11px] text-ink-300">
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-neon-400" /> جارٍ الحفظ...
+          </span>
+        )}
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
