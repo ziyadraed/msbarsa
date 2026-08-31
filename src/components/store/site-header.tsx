@@ -19,14 +19,25 @@ const NAV = [
 ];
 
 export function Logo({ compact = false }: { compact?: boolean }) {
+  const [brand, setBrand] = useState({ name: "مسبار", logo: "" });
+  useEffect(() => {
+    fetch("/api/site/store")
+      .then((r) => r.json())
+      .then((d) => setBrand({ name: d.name || "مسبار", logo: d.logo || "" }))
+      .catch(() => {});
+  }, []);
   return (
     <Link href="/" className="group flex items-center gap-3">
       <span className="relative grid place-items-center w-11 h-11 rounded-2xl bg-gradient-to-br from-neon-500 via-neon-400 to-viol-500 text-ink-950 shadow-[0_10px_30px_-8px_rgba(34,211,238,0.6)] group-hover:rotate-6 transition-transform duration-500">
-        <Radar className="w-6 h-6" strokeWidth={2} />
+        {brand.logo ? (
+          <img src={brand.logo} alt={brand.name} className="w-7 h-7 rounded-lg object-contain bg-white/20" />
+        ) : (
+          <Radar className="w-6 h-6" strokeWidth={2} />
+        )}
       </span>
       {!compact && (
         <span className="leading-tight">
-          <span className="block text-xl font-bold">مسبار</span>
+          <span className="block text-xl font-bold">{brand.name}</span>
           <span className="block font-latin text-[10px] tracking-[0.35em] text-ink-300">MESBAR.STORE</span>
         </span>
       )}
