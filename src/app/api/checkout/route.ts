@@ -1,6 +1,6 @@
 import { db } from "@/db";
-import { coupons, orders, orderItems } from "@/db/schema";
-import { and, eq, sql } from "drizzle-orm";
+import { coupons, orders, orderItems, products } from "@/db/schema";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { priceMap } from "@/lib/data";
 import { generateLicenseKey, generateOrderNumber, validEmail } from "@/lib/utils";
 import { getSessionUser } from "@/lib/auth";
@@ -46,6 +46,26 @@ export async function POST(req: Request) {
     const subtotal = lines.reduce((s, l) => s + l.price * l.qty, 0);
 
     const storeId = await getStoreId();
+
+    // Server-side stock guard — never let a customer buy an out-of-stock item.
+    if (storeId) {
+      const slugs = lines.map((l) => l.slug);
+      const stockRows = await db
+        .select({ slug: products.slug, stock: products.stock })
+        .from(products)
+        .where(and(eq(products.storeId, storeId), inArray(products.slug, slugs)));
+      const stockMap = Object.fromEntries(stockRows.map((r) => [r.slug, r.stock]));
+      for (const line of lines) {
+        const available = stockMap[line.slug] ?? 0;
+        if (available <= 0) {
+          return Response.json({ error: `"${line.name}" نفد المخزون — لا يمكن شراؤه حاليًا.` }, { status: 400 });
+        }
+        if (line.qty > available) {
+          return Response.json({ error: `الكمية المطلوبة من "${line.name}" تتجاوز المتوفر (${available})` }, { status: 400 });
+        }
+      }
+    }
+
     const now = new Date();
 
     // Coupon resolution (percent / fixed / free_shipping), validated server-side.

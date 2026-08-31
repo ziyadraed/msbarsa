@@ -15,8 +15,11 @@ export default function ProductView({ product, category, related }: { product: P
   const router = useRouter();
   const [qty, setQty] = useState(1);
   const pct = discountPct(product.price, product.comparePrice);
+  const outOfStock = product.stock <= 0;
+  const available = Math.max(0, product.stock);
 
   const addAndGo = (go: boolean) => {
+    if (outOfStock) return;
     cart.add(
       {
         slug: product.slug,
@@ -91,24 +94,36 @@ export default function ProductView({ product, category, related }: { product: P
               </span>
             </div>
 
-            <div className="mt-6 flex flex-wrap items-center gap-4">
-              <div className="flex items-center gap-1 rounded-2xl border border-white/12 overflow-hidden">
-                <button onClick={() => setQty(Math.max(1, qty - 1))} className="w-11 h-12 grid place-items-center hover:bg-white/5" aria-label="تقليل الكمية">
-                  <Minus className="w-4 h-4" />
+            {outOfStock ? (
+              <div className="mt-6 rounded-2xl border border-red-400/40 bg-red-400/10 px-5 py-4 text-sm font-semibold text-red-300 flex items-center gap-2.5">
+                <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
+                نفد المخزون — هذا المنتج غير متاح حاليًا. تابع معنا أو اختر منتجًا مشابهًا.
+              </div>
+            ) : (
+              <div className="mt-6 flex flex-wrap items-center gap-4">
+                <div className="flex items-center gap-1 rounded-2xl border border-white/12 overflow-hidden">
+                  <button onClick={() => setQty(Math.max(1, qty - 1))} className="w-11 h-12 grid place-items-center hover:bg-white/5" aria-label="تقليل الكمية">
+                    <Minus className="w-4 h-4" />
+                  </button>
+                  <span className="w-11 text-center font-latin font-bold">{qty}</span>
+                  <button onClick={() => setQty(Math.min(available, qty + 1))} className="w-11 h-12 grid place-items-center hover:bg-white/5" aria-label="زيادة الكمية">
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
+                {available > 0 && (
+                  <span className="text-xs text-ink-300">
+                    <span className="font-bold text-ink-100 font-latin">{available}</span> متوفر في المخزون
+                  </span>
+                )}
+                <button onClick={() => addAndGo(false)} className="btn-ghost rounded-2xl px-6 py-3.5 font-bold flex items-center gap-2 flex-1 justify-center sm:flex-none">
+                  <ShoppingBag className="w-4.5 h-4.5" />
+                  أضف إلى السلة
                 </button>
-                <span className="w-11 text-center font-latin font-bold">{qty}</span>
-                <button onClick={() => setQty(Math.min(10, qty + 1))} className="w-11 h-12 grid place-items-center hover:bg-white/5" aria-label="زيادة الكمية">
-                  <Plus className="w-4 h-4" />
+                <button onClick={() => addAndGo(true)} className="btn-primary rounded-2xl px-6 py-3.5 font-bold flex-1 sm:flex-none">
+                  اشترِ الآن
                 </button>
               </div>
-              <button onClick={() => addAndGo(false)} className="btn-ghost rounded-2xl px-6 py-3.5 font-bold flex items-center gap-2 flex-1 justify-center sm:flex-none">
-                <ShoppingBag className="w-4.5 h-4.5" />
-                أضف إلى السلة
-              </button>
-              <button onClick={() => addAndGo(true)} className="btn-primary rounded-2xl px-6 py-3.5 font-bold flex-1 sm:flex-none">
-                اشترِ الآن
-              </button>
-            </div>
+            )}
           </div>
 
           {/* specs */}

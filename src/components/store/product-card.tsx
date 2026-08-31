@@ -34,6 +34,11 @@ export default function ProductCard({ product, index = 0 }: { product: Product; 
             -{pct}%
           </span>
         )}
+        {product.stock <= 0 && (
+          <span className="absolute bottom-3 start-3 z-10 rounded-full bg-ink-950/80 border border-red-400/50 text-red-300 text-[10px] font-bold px-3 py-1 backdrop-blur-md">
+            نفد المخزون
+          </span>
+        )}
       </Link>
 
       <div className="p-5 flex flex-col gap-3 flex-1">
