@@ -6,7 +6,7 @@ import { useState } from "react";
 import {
   LayoutDashboard, ShoppingBag, Package, Users, Megaphone, BarChart3, Settings, Store,
   ChevronDown, Truck, CreditCard, Wrench, FileClock, Globe, MapPin, ArrowRight, Wallet,
-  TrendingUp, UserCog, Shield, Tags, Boxes, Layers, Repeat, Download, Boxes as Stock, Menu,
+  TrendingUp, UserCog, Shield, Tags, Boxes, Layers, Repeat, Download, Boxes as Stock,
 } from "lucide-react";
 
 export type NavItem = { href: string; label: string };
@@ -245,27 +245,9 @@ export const MERCHANT_NAV: NavGroup[] = [
 export default function MerchantSidebar() {
   const pathname = usePathname();
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
-  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <>
-      {/* Mobile overlay backdrop */}
-      {mobileOpen && (
-        <div className="fixed inset-0 z-40 bg-black/60 lg:hidden" onClick={() => setMobileOpen(false)} />
-      )}
-
-      {/* Mobile toggle button (hamburger) */}
-      <button
-        onClick={() => setMobileOpen((v) => !v)}
-        className="fixed bottom-5 left-5 z-50 grid place-items-center w-12 h-12 rounded-2xl bg-neon-400 text-ink-900 shadow-lg shadow-neon-400/30 lg:hidden"
-        aria-label="فتح/إغلاق القائمة"
-      >
-        <Menu className="w-5 h-5" />
-      </button>
-
-      <aside className={`w-72 shrink-0 border-e border-white/8 bg-ink-900/40 flex-col overflow-y-auto top-0 h-screen transition-transform duration-200 ${
-        mobileOpen ? "fixed inset-y-0 right-0 z-50 flex shadow-2xl" : "hidden lg:flex lg:static lg:translate-x-0"
-      }`}>
+    <aside className="w-72 shrink-0 border-e border-white/8 bg-ink-900/40 flex flex-col sticky top-0 h-screen">
       <div className="p-5 border-b border-white/8 flex items-center gap-3">
         <span className="grid place-items-center w-10 h-10 rounded-2xl bg-gradient-to-br from-neon-500/30 to-viol-500/30 border border-white/10">
           <Store className="w-5 h-5 text-neon-400" />
@@ -337,6 +319,5 @@ export default function MerchantSidebar() {
         </Link>
       </div>
     </aside>
-    </>
   );
 }
